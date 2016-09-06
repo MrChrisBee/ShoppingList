@@ -1,4 +1,4 @@
-package de.example.frank.shoppinglist;
+package de.example.christian.shoppinglist;
 
 /**
  * Created by Administrator on 06.09.2016.

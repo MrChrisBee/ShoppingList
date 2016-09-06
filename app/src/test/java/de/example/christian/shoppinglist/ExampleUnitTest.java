@@ -1,4 +1,4 @@
-package de.example.frank.shoppinglist;
+package de.example.christian.shoppinglist;
 
 import org.junit.Test;
 
