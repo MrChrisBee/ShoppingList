@@ -1,8 +1,6 @@
 package de.example.frank.shoppinglist;
 
-/**
- * Created by Administrator on 06.09.2016.
- */
+
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
