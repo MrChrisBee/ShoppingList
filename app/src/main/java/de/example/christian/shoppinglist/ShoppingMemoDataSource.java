@@ -1,18 +1,26 @@
 package de.example.christian.shoppinglist;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-/**
- * Created by Administrator on 06.09.2016.
- */
+
 public class ShoppingMemoDataSource {
+
     private static final String LOG_TAG = ShoppingMemoDataSource.class.getSimpleName();
     private SQLiteDatabase db;
     private ShoppingMemoDbHelper helper;
 
-    public ShoppingMemoDataSource(Context con){
+    private String[] columns =
+            {
+                    ShoppingMemoDbHelper.COLUMN_ID,
+                    ShoppingMemoDbHelper.COLUMN_PRODUCT,
+                    ShoppingMemoDbHelper.COLUMN_QUANTITY
+            };
+
+    public ShoppingMemoDataSource(Context con) {
         Log.d(LOG_TAG, "Der Helper wird erzeugt.");
         helper = new ShoppingMemoDbHelper(con);
     }
@@ -20,12 +28,40 @@ public class ShoppingMemoDataSource {
     public void open() {
         Log.d(LOG_TAG, "Wir öffnen die Datenbank im RW Mode.");
         db = helper.getWritableDatabase();
-        Log.d(LOG_TAG,"Pfad zur DB " + db.getPath());
+        Log.d(LOG_TAG, "Pfad zur DB " + db.getPath());
     }
 
     public void close() {
         helper.close();
-        Log.d(LOG_TAG,"Datenbank wurde geschlossen." );
+        Log.d(LOG_TAG, "Datenbank wurde geschlossen.");
+    }
+
+    public ShoppingMemo createShoppingMemo(String product, int quantity) {
+        ContentValues values = new ContentValues();
+        values.put(ShoppingMemoDbHelper.COLUMN_PRODUCT, product);
+        values.put(ShoppingMemoDbHelper.COLUMN_QUANTITY, quantity);
+
+        long insertId = db.insert(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, null, values);
+
+        Cursor cursor = db.query(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, columns,
+                ShoppingMemoDbHelper.COLUMN_ID + "=" + insertId, null, null, null, null);
+        cursor.moveToFirst();
+        ShoppingMemo shoppingMemo = cursorToShoppingMemo(cursor);
+        cursor.close();
+        return shoppingMemo;
+    }
+
+    private ShoppingMemo cursorToShoppingMemo(Cursor cursor) {
+        int idIndex = cursor.getColumnIndex(ShoppingMemoDbHelper.COLUMN_ID);
+        int idProduct = cursor.getColumnIndex(ShoppingMemoDbHelper.COLUMN_PRODUCT);
+        int idQuantity = cursor.getColumnIndex(ShoppingMemoDbHelper.COLUMN_QUANTITY);
+
+        String product = cursor.getString(idProduct);
+        int quality = cursor.getInt(idQuantity);
+        long id = cursor.getLong(idIndex);
+        ShoppingMemo shoppingMemo = new ShoppingMemo(product, quality, id);
+        return shoppingMemo;
     }
 
 }
+

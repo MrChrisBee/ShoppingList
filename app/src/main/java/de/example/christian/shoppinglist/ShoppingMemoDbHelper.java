@@ -15,12 +15,12 @@ public class ShoppingMemoDbHelper extends SQLiteOpenHelper {
     //Spalten
     public static final String COLUMN_ID = "id";
     public static final String COLUMN_PRODUCT = "product";
-    public static final String COLUMN_QUANTITIY = "quantity";
+    public static final String COLUMN_QUANTITY = "quantity";
 
     public static final String SQL_CREATE = "CREATE TABLE " + TABLE_SHOPPING_LIST +
             "(" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "+
             COLUMN_PRODUCT + " TEXT NOT NULL, " +
-            COLUMN_QUANTITIY + " INTEGER NOT NULL );";
+            COLUMN_QUANTITY + " INTEGER NOT NULL );";
 
     public ShoppingMemoDbHelper(Context con){
         super(con,DB_NAME,null,DB_VERSION);
