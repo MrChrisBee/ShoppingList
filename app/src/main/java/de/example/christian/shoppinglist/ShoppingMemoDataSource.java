@@ -13,7 +13,19 @@ public class ShoppingMemoDataSource {
     private ShoppingMemoDbHelper helper;
 
     public ShoppingMemoDataSource(Context con){
-        Log.d(LOG_TAG, " Der Helper wird erzeugt.");
+        Log.d(LOG_TAG, "Der Helper wird erzeugt.");
         helper = new ShoppingMemoDbHelper(con);
     }
+
+    public void open() {
+        Log.d(LOG_TAG, "Wir öffnen die Datenbank im RW Mode.");
+        db = helper.getWritableDatabase();
+        Log.d(LOG_TAG,"Pfad zur DB " + db.getPath());
+    }
+
+    public void close() {
+        helper.close();
+        Log.d(LOG_TAG,"Datenbank wurde geschlossen." );
+    }
+
 }
