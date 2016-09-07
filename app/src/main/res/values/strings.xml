@@ -9,8 +9,8 @@
     <string name="button_add_product">+</string>
 
     <string name="editText_errorMessage">Das Feld darf nicht leer sein.</string>
-
-
-
+    <string name="delete">Eintrag löschen</string>
+    <string name="edit">Editiere den Eintrag</string>
+    <string name="checked">ausgewählt</string>
 
 </resources>

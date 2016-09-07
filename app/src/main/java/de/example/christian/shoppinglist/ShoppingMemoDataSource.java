@@ -80,6 +80,10 @@ public class ShoppingMemoDataSource {
         return shoppingMemoList;
     }
 
+    public void deleteShoppingMemo(ShoppingMemo shoppingMemo) {
+        long id = shoppingMemo.getId();
+        db.delete(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, ShoppingMemoDbHelper.COLUMN_ID + "=" + id,null);
+    }
 
 }
 
