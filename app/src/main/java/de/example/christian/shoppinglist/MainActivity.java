@@ -1,6 +1,8 @@
 package de.example.christian.shoppinglist;
 
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
@@ -19,6 +21,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -68,16 +71,25 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.d(LOG_TAG, "Quelle wird geoffnet.");
         dataSource.open();
+        showAllListEntries();
     }
 
     private void initializeContextualActionBar() {
         final ListView shoppingMemoListView = (ListView) findViewById(R.id.listview_shopping_memos);
         shoppingMemoListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         shoppingMemoListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+            int selectCount = 0;
 
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-
+                if (checked) {
+                    selectCount++;
+                } else {
+                    selectCount--;
+                }
+                String capTitle = selectCount + " " + getString(R.string.checked);
+                mode.setTitle(capTitle);
+                mode.invalidate();
             }
 
 
@@ -89,16 +101,23 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                return false;
+                MenuItem item = menu.findItem(R.id.change);
+                if (selectCount == 1) {
+                    item.setVisible(true);
+                } else {
+                    item.setVisible(false);
+                }
+
+                return true;
             }
 
 
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                SparseBooleanArray touchedMemoPosition;
+                touchedMemoPosition = shoppingMemoListView.getCheckedItemPositions();
                 switch (item.getItemId()) {
                     case R.id.delete:
-                        SparseBooleanArray touchedMemoPosition;
-                        touchedMemoPosition = shoppingMemoListView.getCheckedItemPositions();
                         for (int i = 0; i < touchedMemoPosition.size(); i++) {
                             boolean isChecked = touchedMemoPosition.valueAt(i);
                             if (isChecked) {
@@ -108,16 +127,28 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         showAllListEntries();
-                        mode.finish();
-                        return true;
+                        break;
+                    case R.id.change:
+                        for (int i = 0; i < touchedMemoPosition.size(); i++) {
+                            boolean isChecked = touchedMemoPosition.valueAt(i);
+                            if (isChecked) {
+                                int posInListView = touchedMemoPosition.keyAt(i);
+                                ShoppingMemo memo = (ShoppingMemo) shoppingMemoListView.getItemAtPosition(posInListView);
+                                AlertDialog editShoppingDialog = createEditShoppingMemoDialog(memo);
+                                editShoppingDialog.show();
+                            }
+                        }
+                        break;
                     default:
                         return false;
                 }
+                mode.finish();
+                return true;
             }
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-
+                selectCount = 0;
             }
         });
     }
@@ -144,18 +175,17 @@ public class MainActivity extends AppCompatActivity {
                 editProduct.setText("");
                 editQuantity.setText("");
                 dataSource.createShoppingMemo(product, quantity);
-                /*
-                * Lässt die Tastatur nach klick auf den Button verschwinden
-                * */
-                InputMethodManager inputMethodManager;
-                inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                if (getCurrentFocus() != null) {
-                    inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-                }
+                hideKeyboard();
                 showAllListEntries();
             }
         });
     }
+
+    private void hideKeyboard() {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        inputMethodManager.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY,InputMethodManager.HIDE_NOT_ALWAYS);
+    }
+
 
     private void showAllListEntries() {
         List<ShoppingMemo> list = dataSource.getAllShoppingMemos();
@@ -195,13 +225,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private AlertDialog createEditShoppingMemo(final ShoppingMemo memo) {
+    private AlertDialog createEditShoppingMemoDialog(final ShoppingMemo memo) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogsView = inflater.inflate(R.layout.dialog_edit_shopping_memo, null);
-        final EditText editTextQuantity = (EditText) dialogsView.findViewById(R.id.editText_quantity);
+        final EditText editTextQuantity = (EditText) dialogsView.findViewById(R.id.editText_new_quantity);
         editTextQuantity.setText(String.valueOf(memo.getQuantity()));
-        final EditText editTextProduct = (EditText) dialogsView.findViewById(R.id.editText_product);
+        final EditText editTextProduct = (EditText) dialogsView.findViewById(R.id.editText_new_product);
         editTextProduct.setText(String.valueOf(memo.getProduct()));
 
         builder.setView(dialogsView).setTitle(R.string.dialog_title).
@@ -217,6 +247,7 @@ public class MainActivity extends AppCompatActivity {
                         ShoppingMemo shoppingMemo = dataSource.updateShoppingMemo(memo.getId(), product, quantity);
                         showAllListEntries();
                         dialog.dismiss();
+                        hideKeyboard();
                     }
                 }).setNegativeButton(R.string.dialog_button_negative, new DialogInterface.OnClickListener() {
             /**
