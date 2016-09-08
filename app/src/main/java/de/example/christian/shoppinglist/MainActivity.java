@@ -1,12 +1,15 @@
 package de.example.christian.shoppinglist;
 
 
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,7 +19,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -85,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
 
-
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                 return false;
@@ -105,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
                                 ShoppingMemo memo = (ShoppingMemo) shoppingMemoListView.getItemAtPosition(posInListView);
                                 dataSource.deleteShoppingMemo(memo);
                             }
-
                         }
                         showAllListEntries();
                         mode.finish();
@@ -169,7 +169,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
 
         // Inflate the menu; this adds items to the action bar if it is present.
-
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
         return true;
@@ -196,4 +195,38 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private AlertDialog createEditShoppingMemo(final ShoppingMemo memo) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogsView = inflater.inflate(R.layout.dialog_edit_shopping_memo, null);
+        final EditText editTextQuantity = (EditText) dialogsView.findViewById(R.id.editText_quantity);
+        editTextQuantity.setText(String.valueOf(memo.getQuantity()));
+        final EditText editTextProduct = (EditText) dialogsView.findViewById(R.id.editText_product);
+        editTextProduct.setText(String.valueOf(memo.getProduct()));
+
+        builder.setView(dialogsView).setTitle(R.string.dialog_title).
+                setPositiveButton(R.string.dialog_button_positive, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String quantityString = editTextQuantity.getText().toString();
+                        String product = editTextProduct.getText().toString();
+                        if (TextUtils.isEmpty(quantityString) || TextUtils.isEmpty(product)) {
+                            return;
+                        }
+                        int quantity = Integer.parseInt(quantityString);
+                        ShoppingMemo shoppingMemo = dataSource.updateShoppingMemo(memo.getId(), product, quantity);
+                        showAllListEntries();
+                        dialog.dismiss();
+                    }
+                }).setNegativeButton(R.string.dialog_button_negative, new DialogInterface.OnClickListener() {
+            /**
+             * This method will be invoked when a button in the dialog is clicked.
+             */
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        return builder.create();
+    }
 }

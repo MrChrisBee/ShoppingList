@@ -68,11 +68,11 @@ public class ShoppingMemoDataSource {
 
     public List<ShoppingMemo> getAllShoppingMemos() {
         List<ShoppingMemo> shoppingMemoList = new ArrayList<>();
-        Cursor cursor = db.query(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST,columns,null,null,null,null,null);
+        Cursor cursor = db.query(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, columns, null, null, null, null, null);
         cursor.moveToFirst();
         ShoppingMemo memo;
-        while (!cursor.isAfterLast()){
-            memo=cursorToShoppingMemo(cursor);
+        while (!cursor.isAfterLast()) {
+            memo = cursorToShoppingMemo(cursor);
             shoppingMemoList.add(memo);
             cursor.moveToNext();
         }
@@ -82,8 +82,19 @@ public class ShoppingMemoDataSource {
 
     public void deleteShoppingMemo(ShoppingMemo shoppingMemo) {
         long id = shoppingMemo.getId();
-        db.delete(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, ShoppingMemoDbHelper.COLUMN_ID + "=" + id,null);
+        db.delete(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, ShoppingMemoDbHelper.COLUMN_ID + "=" + id, null);
     }
 
+    public ShoppingMemo updateShoppingMemo(long id, String produkt, int quantity) {
+        ContentValues values = new ContentValues();
+        values.put(ShoppingMemoDbHelper.COLUMN_PRODUCT, produkt);
+        values.put(ShoppingMemoDbHelper.COLUMN_QUANTITY, quantity);
+        db.update(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, values, ShoppingMemoDbHelper.COLUMN_ID + "=" + id, null);
+        Cursor cursor = db.query(ShoppingMemoDbHelper.TABLE_SHOPPING_LIST, columns,
+                ShoppingMemoDbHelper.COLUMN_ID + "=" + id, null, null, null, null);
+        cursor.moveToFirst();
+        ShoppingMemo shoppingMemo = cursorToShoppingMemo(cursor);
+        return shoppingMemo;
+    }
 }
 
