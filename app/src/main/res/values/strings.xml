@@ -8,11 +8,12 @@
     <string name="editText_hint_product">Produkt</string>
     <string name="button_add_product">+</string>
 
-    <string name="editText_errorMessage">Das Feld darf nicht leer sein.</string>
+    <string name="editText_errorMessage_anzahl">Das Feld Anzahl darf nicht leer sein.</string>
+    <string name="editText_errorMessage_text">Das Feld Text darf nicht leer sein.</string>
 
     <string name="delete">Eintrag löschen</string>
     <string name="change">Eintrag ändern</string>
-    <string name="checked">ausgewält</string>
+    <string name="bought">ausgewält</string>
 
     <string name="dialog_title">Listeneintrag ändern</string>
     <string name="dialog_title_quantity">Anzahl</string>

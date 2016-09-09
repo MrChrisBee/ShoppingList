@@ -1,9 +1,9 @@
 package de.example.christian.shoppinglist;
 
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -15,27 +15,63 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private ShoppingMemoDataSource dataSource;
+    private ListView mShoppingMemosListView;
 
     @Override
-
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         dataSource = new ShoppingMemoDataSource(this);
+        initializeShoppingMemoListView();
         activateAddButton();
         initializeContextualActionBar();
+    }
+
+    private void initializeShoppingMemoListView() {
+        List<ShoppingMemo> emptyListForInitialisation = new ArrayList<>();
+        mShoppingMemosListView = (ListView) findViewById(R.id.listview_shopping_memos);
+        ArrayAdapter<ShoppingMemo> arrayAdapter = new ArrayAdapter<ShoppingMemo>(this, android.R.layout.simple_list_item_single_choice, emptyListForInitialisation) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = (TextView) view;
+                ShoppingMemo memo = (ShoppingMemo) mShoppingMemosListView.getItemAtPosition(position);
+                if (memo.isBought()) {
+                    textView.setPaintFlags(textView.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    textView.setTextColor(Color.rgb(175, 175, 175));
+                } else {
+                    textView.setPaintFlags(textView.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+                    textView.setTextColor(Color.DKGRAY);
+                }
+                return view;
+            }
+        };
+        mShoppingMemosListView.setAdapter(arrayAdapter);
+        mShoppingMemosListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ShoppingMemo memo = (ShoppingMemo) parent.getItemAtPosition(position);
+                ShoppingMemo updateMemo = dataSource.updateShoppingMemo(memo.getId(), memo.getProduct(), memo.getQuantity(), !memo.isBought());
+                showAllListEntries();
+            }
+        });
     }
 
     @Override
@@ -87,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     selectCount--;
                 }
-                String capTitle = selectCount + " " + getString(R.string.checked);
+                String capTitle = selectCount + " " + getString(R.string.bought);
                 mode.setTitle(capTitle);
                 mode.invalidate();
             }
@@ -164,11 +200,11 @@ public class MainActivity extends AppCompatActivity {
                 String quantitiyTmp = editQuantity.getText().toString();
                 String product = editProduct.getText().toString();
                 if (TextUtils.isEmpty(quantitiyTmp)) {
-                    editQuantity.setError(getString(R.string.editText_errorMessage));
+                    editQuantity.setError(getString(R.string.editText_errorMessage_anzahl));
                     return;
                 }
                 if (TextUtils.isEmpty(product)) {
-                    editProduct.setError(getString(R.string.editText_errorMessage));
+                    editProduct.setError(getString(R.string.editText_errorMessage_text));
                     return;
                 }
                 int quantity = Integer.parseInt(quantitiyTmp);
@@ -183,15 +219,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void hideKeyboard() {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        inputMethodManager.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY,InputMethodManager.HIDE_NOT_ALWAYS);
+        inputMethodManager.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
 
     private void showAllListEntries() {
         List<ShoppingMemo> list = dataSource.getAllShoppingMemos();
-        ArrayAdapter<ShoppingMemo> adapter = new ArrayAdapter<ShoppingMemo>(this, android.R.layout.simple_list_item_single_choice, list);
-        ListView listView = (ListView) findViewById(R.id.listview_shopping_memos);
-        listView.setAdapter(adapter);
+        ArrayAdapter<ShoppingMemo> adapter = (ArrayAdapter<ShoppingMemo>) mShoppingMemosListView.getAdapter();
+        adapter.clear();
+        adapter.addAll(list);
+        adapter.notifyDataSetChanged();
     }
 
     @Override
@@ -234,8 +271,9 @@ public class MainActivity extends AppCompatActivity {
         final EditText editTextProduct = (EditText) dialogsView.findViewById(R.id.editText_new_product);
         editTextProduct.setText(String.valueOf(memo.getProduct()));
 
-        builder.setView(dialogsView).setTitle(R.string.dialog_title).
-                setPositiveButton(R.string.dialog_button_positive, new DialogInterface.OnClickListener() {
+        builder.setView(dialogsView)
+                .setTitle(R.string.dialog_title)
+                .setPositiveButton(R.string.dialog_button_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         String quantityString = editTextQuantity.getText().toString();
@@ -244,20 +282,22 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
                         int quantity = Integer.parseInt(quantityString);
-                        ShoppingMemo shoppingMemo = dataSource.updateShoppingMemo(memo.getId(), product, quantity);
+                        ShoppingMemo shoppingMemo = dataSource.updateShoppingMemo(memo.getId(), product, quantity, memo.isBought());
+
                         showAllListEntries();
                         dialog.dismiss();
                         hideKeyboard();
                     }
-                }).setNegativeButton(R.string.dialog_button_negative, new DialogInterface.OnClickListener() {
-            /**
-             * This method will be invoked when a button in the dialog is clicked.
-             */
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
+                })
+                .setNegativeButton(R.string.dialog_button_negative, new DialogInterface.OnClickListener() {
+                    /**
+                     * This method will be invoked when a button in the dialog is clicked.
+                     */
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
         return builder.create();
     }
 }
